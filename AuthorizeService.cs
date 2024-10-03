@@ -3,13 +3,16 @@ using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 public static class AuthorizeService
 {
     private static AppSettings _appSettings;
-    public static void Initialize(AppSettings appSettings)
+    public static void Initialize()
     {
-        _appSettings = appSettings;
+        var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+        _appSettings = configuration.Get<AppSettings>() ?? throw new Exception("AppSettings not found in appsettings.json.");
+        _appSettings?.Validate();
     }
     public static async Task InitiateAuthorizationCodeFlow()
     {
@@ -19,6 +22,8 @@ public static class AuthorizeService
         requestParams["redirect_uri"] = _appSettings.RedirectUrl;
         requestParams["scope"] = _appSettings.Scope;
         requestParams["state"] = GenerateState();
+
+        Console.WriteLine($"Initiating Authorization Request to {_appSettings.AuthorizeEndpoint}...");
         await LaunchBrowser(_appSettings.AuthorizeEndpoint, requestParams);
     }
 
