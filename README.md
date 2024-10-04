@@ -22,8 +22,7 @@ This repository contains a .NET console application that implements the OAuth2 A
     "ClientId": "YOUR_CLIENT_ID",
     "ClientSecret": "YOUR_CLIENT_SECRET",
     "Scope": "YOUR_REQUESTED_SCOPES",
-    "RedirectUrl": "YOUR_REDIRECT_URL",
-    "CallBackUrl": "YOUR_CALLBACK_URL"
+    "RedirectUrl": "YOUR_REDIRECT_URL"
   }
   ```
 
@@ -33,8 +32,8 @@ This repository contains a .NET console application that implements the OAuth2 A
 
 - **AuthorizeService.cs**: Contains methods for managing the OAuth2 authorization flow:
 
-  - **`Initialize(AppSettings appSettings)`**:  
-    Initializes the `AuthorizeService` with the provided application settings. It sets up the necessary configuration such as client ID, endpoints, and redirect URLs.
+  - **`Initialize()`**:  
+    Loads application settings from the `appsettings.json` file using `ConfigurationBuilder` and stores them in `_appSettings`. It throws an exception if settings are not found and calls the `Validate()` method to ensure the settings are correct. Additionally, it generates a new state string for use in processes of OAuth2.
 
   - **`InitiateAuthorizationCodeFlow()`**:  
     Starts the OAuth2 Authorization Code Flow by launching the browser and directing the user to the authorization server’s endpoint. It sends required parameters like `response_type`, `client_id`, `scope`, and `redirect_uri`.
@@ -53,6 +52,9 @@ This repository contains a .NET console application that implements the OAuth2 A
 
   - **`LaunchBrowser(string url, Dictionary<string, string> requestParams)`**:  
     Opens the default browser on the user’s machine with the constructed authorization URL, passing the necessary request parameters.
+
+  - **`IsStateCorrelated(string state)`**:  
+    Compares the provided `state` with the predefined `_state`. Returns `true` if they match, ensuring the state is valid in contexts like OAuth2 to prevent CSRF attacks.
 
 - **AppSettings.cs**: Defines the application settings that are read from the `appsettings.json` file. These include endpoints, client credentials, and redirect URLs.
 
