@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 
@@ -9,12 +10,14 @@ public static class AuthorizeService
 {
     private static AppSettings _appSettings;
     private static string _state;
+    private static string _codeVerifier;
     public static void Initialize()
     {
         var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
         _appSettings = configuration.Get<AppSettings>() ?? throw new Exception("AppSettings not found in appsettings.json.");
         _appSettings?.Validate();
         _state = GenerateState();
+        _codeVerifier = GenerateCodeVerifier();
     }
     public static async Task InitiateAuthorizationCodeFlow()
     {
@@ -23,6 +26,8 @@ public static class AuthorizeService
         requestParams["client_id"] = _appSettings.ClientId;
         requestParams["redirect_uri"] = _appSettings.RedirectUrl;
         requestParams["scope"] = _appSettings.Scope;
+        requestParams["code_challenge_method"] = _appSettings.CodeChallengeMethod;
+        requestParams["code_challenge"] = GenerateCodeChallenge();
         requestParams["state"] = _state;
 
         Console.WriteLine($"Initiating Authorization Request to {_appSettings.AuthorizeEndpoint}...");
@@ -71,7 +76,7 @@ public static class AuthorizeService
                 { "code", authorizationCode },
                 { "redirect_uri", _appSettings.RedirectUrl },
                 { "client_id", _appSettings.ClientId },
-                { "client_secret", _appSettings.ClientSecret }
+                { "code_verifier", _codeVerifier },
             };
 
                 var content = new FormUrlEncodedContent(parameters);
@@ -110,11 +115,35 @@ public static class AuthorizeService
 
     private static string GenerateState()
     {
+        string base64State = GenerateRandomBase64();
+        return Base64UrlEncode(base64State);
+    }
+    private static string GenerateCodeVerifier()
+    {
+        return GenerateRandomBase64();
+    }
+
+    private static string GenerateCodeChallenge()
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(_codeVerifier);
+            byte[] hash = sha256.ComputeHash(bytes);
+            string codeChallenge = Convert.ToBase64String(hash);
+            return Base64UrlEncode(codeChallenge);
+        }
+    }
+
+    private static string Base64UrlEncode(string tectToEncode)
+    {
+        return tectToEncode.Replace("+", "-").Replace("/", "_").Replace("=", "");
+    }
+
+    private static string GenerateRandomBase64()
+    {
         byte[] randomBytes = new byte[32];
         RandomNumberGenerator.Fill(randomBytes);
-        string base64State = Convert.ToBase64String(randomBytes);
-        string urlSafeState = base64State.Replace("+", "-").Replace("/", "_").Replace("=", "");
-        return urlSafeState;
+        return Convert.ToBase64String(randomBytes);
     }
 
     private static async Task LaunchBrowser(string url, Dictionary<string, string> requestParams)

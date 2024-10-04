@@ -6,17 +6,17 @@ public class AppSettings
 
     //Client configurations
     public string ClientId { get; set; }
-    public string ClientSecret { get; set; }
     public string Scope { get; set; }
     public string RedirectUrl { get; set; }
+    public string CodeChallengeMethod { get; set; }
     public void Validate()
     {
         ValidateProperty(AuthorizeEndpoint, nameof(AuthorizeEndpoint));
         ValidateProperty(TokenEndpoint, nameof(TokenEndpoint));
         ValidateProperty(ClientId, nameof(ClientId));
-        ValidateProperty(ClientSecret, nameof(ClientSecret));
         ValidateProperty(Scope, nameof(Scope));
         ValidateProperty(RedirectUrl, nameof(RedirectUrl));
+        ValidateProperty(CodeChallengeMethod, nameof(CodeChallengeMethod));
     }
 
     private void ValidateProperty(string propertyValue, string propertyName)
