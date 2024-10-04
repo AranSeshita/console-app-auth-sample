@@ -32,9 +32,10 @@ public static class AuthorizeService
     public static async Task<(string authorizationCode, string state)> InitiateCallbackListner()
     {
         HttpListener listener = new HttpListener();
-        listener.Prefixes.Add(_appSettings.CallBackUrl);
+        var callbackUrl = _appSettings.RedirectUrl.EndsWith("/") ? _appSettings.RedirectUrl : _appSettings.RedirectUrl + "/";
+        listener.Prefixes.Add(callbackUrl);
         listener.Start();
-        Console.WriteLine($"Listning on {_appSettings.CallBackUrl}...");
+        Console.WriteLine($"Listning on {callbackUrl}...");
 
         // The GetContext method blocks while waiting for a request.
         HttpListenerContext context = await listener.GetContextAsync();

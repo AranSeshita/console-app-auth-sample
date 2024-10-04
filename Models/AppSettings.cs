@@ -8,7 +8,6 @@ public class AppSettings
     public string ClientId { get; set; }
     public string ClientSecret { get; set; }
     public string Scope { get; set; }
-    public string CallBackUrl { get; set; }
     public string RedirectUrl { get; set; }
     public void Validate()
     {
@@ -17,7 +16,6 @@ public class AppSettings
         ValidateProperty(ClientId, nameof(ClientId));
         ValidateProperty(ClientSecret, nameof(ClientSecret));
         ValidateProperty(Scope, nameof(Scope));
-        ValidateProperty(CallBackUrl, nameof(CallBackUrl));
         ValidateProperty(RedirectUrl, nameof(RedirectUrl));
     }
 
