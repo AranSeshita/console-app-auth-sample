@@ -8,11 +8,13 @@ using Microsoft.Extensions.Configuration;
 public static class AuthorizeService
 {
     private static AppSettings _appSettings;
+    private static string _state;
     public static void Initialize()
     {
         var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
         _appSettings = configuration.Get<AppSettings>() ?? throw new Exception("AppSettings not found in appsettings.json.");
         _appSettings?.Validate();
+        _state = GenerateState();
     }
     public static async Task InitiateAuthorizationCodeFlow()
     {
@@ -21,7 +23,7 @@ public static class AuthorizeService
         requestParams["client_id"] = _appSettings.ClientId;
         requestParams["redirect_uri"] = _appSettings.RedirectUrl;
         requestParams["scope"] = _appSettings.Scope;
-        requestParams["state"] = GenerateState();
+        requestParams["state"] = _state;
 
         Console.WriteLine($"Initiating Authorization Request to {_appSettings.AuthorizeEndpoint}...");
         await LaunchBrowser(_appSettings.AuthorizeEndpoint, requestParams);
@@ -41,6 +43,7 @@ public static class AuthorizeService
         NameValueCollection queryParams = request.QueryString;
         string authorizationCode = queryParams["code"] ?? throw new Exception("Authorization code not found in query parameters.");
         string state = queryParams["state"] ?? throw new Exception("State not found in query parameters.");
+        if (!IsStateCorrelated(state)) throw new Exception("State is not correlated.");
         Console.WriteLine("Successfully received authorization code and state.");
 
         HttpListenerResponse response = context.Response;
@@ -123,5 +126,10 @@ public static class AuthorizeService
             UseShellExecute = true
         };
         Process.Start(psi);
+    }
+
+    private static bool IsStateCorrelated(string state)
+    {
+        return state == _state;
     }
 }
